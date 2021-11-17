@@ -1,0 +1,475 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 10/15/2021 10:59:54 AM
+// Design Name: 
+// Module Name: pixel_gen
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+module pixel_gen(input [15:0] digit1,input [15:0] digit2, input [23:0] charcolor, input [10:0] charx, input [10:0] chary,
+
+input [23:0] background, input [23:0] foreground1,input [23:0] foreground2,input [23:0] foreground3,input [23:0] foreground4, 
+
+input [10:0] Bwidth1, input [10:0] Bheight1, input [10:0] Btopedge1, input [10:0] Bleftedge1, 
+input [10:0] Bwidth2, input [10:0] Bheight2, input [10:0] Btopedge2, input [10:0] Bleftedge2,
+input [10:0] Bwidth3, input [10:0] Bheight3, input [10:0] Btopedge3, input [10:0] Bleftedge3,
+input [10:0] Bwidth4, input [10:0] Bheight4, input [10:0] Btopedge4, input [10:0] Bleftedge4,
+
+input [10:0] String1EN,
+input [10:0] String2EN,
+input [10:0] String3EN,
+input [10:0] String4EN,
+input [10:0] String5EN,
+input [10:0] String6EN,
+
+input [10:0] x, y, input vde, input clk, output reg [7:0] R, G, B );
+
+reg [10:0] RE1;
+reg [10:0] BE1;
+reg [10:0] RE2;
+reg [10:0] BE2;
+reg [10:0] RE3;
+reg [10:0] BE3;
+reg [10:0] RE4;
+reg [10:0] BE4;
+always @(*)
+begin
+    RE1 <= Bleftedge1 + Bwidth1 - 1;
+    BE1 <= Btopedge1 + Bheight1 - 1;
+    RE2 <= Bleftedge2 + Bwidth2 - 1;
+    BE2 <= Btopedge2 + Bheight2 - 1;
+    RE3 <= Bleftedge3 + Bwidth3 - 1;
+    BE3 <= Btopedge3 + Bheight3 - 1;
+    RE4 <= Bleftedge4 + Bwidth4 - 1;
+    BE4 <= Btopedge4 + Bheight4 - 1;
+end
+
+// Calculate the region when x and y are inside of our object (are we ready to draw the object?)
+wire obj1_on;
+wire obj2_on;
+wire obj3_on;
+wire obj4_on;
+assign obj1_on = ((x >= Bleftedge1 && x <= RE1) && (y >= Btopedge1 && y <= BE1));
+assign obj2_on = ((x >= Bleftedge2 && x <= RE2) && (y >= Btopedge2 && y <= BE2));
+assign obj3_on = ((x >= Bleftedge3 && x <= RE3) && (y >= Btopedge3 && y <= BE3));
+assign obj4_on = ((x >= Bleftedge4 && x <= RE4) && (y >= Btopedge4 && y <= BE4));
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+localparam SCORE_LEN = 8;							// Number of characters in the string
+localparam SCORE_WIDTH = 16*SCORE_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam SCORE_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam SCORE_LE = 1350;							
+localparam SCORE_RE = SCORE_LE + SCORE_WIDTH - 1;
+localparam SCORE_TE = 50;
+localparam SCORE_BE = SCORE_TE + SCORE_HEIGHT - 1;
+
+wire [10:0] score_y_adj, score_x_adj;
+assign score_y_adj = y - SCORE_TE;
+assign score_x_adj = x - SCORE_LE;
+
+localparam String1_LEN = 16;							// Number of characters in the string
+localparam String1_WIDTH = 16*String1_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam String1_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam String1_LE = 750;//String1x;							
+localparam String1_RE = String1_LE + String1_WIDTH - 1;
+localparam String1_TE = 50;//String1y;
+localparam String1_BE = String1_TE + String1_HEIGHT - 1;
+ 
+wire [10:0] String1_y_adj, String1_x_adj;
+assign String1_y_adj = y - String1_TE;
+assign String1_x_adj = x - String1_LE;
+
+localparam String2_LEN = 16;							// Number of characters in the string
+localparam String2_WIDTH = 16*String2_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam String2_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam String2_LE = 750;//String2x;							
+localparam String2_RE = String2_LE + String2_WIDTH - 1;
+localparam String2_TE = 100;//String2y;
+localparam String2_BE = String2_TE + String2_HEIGHT - 1;
+
+wire [10:0] String2_y_adj, String2_x_adj;
+assign String2_y_adj = y - String2_TE;
+assign String2_x_adj = x - String2_LE;
+
+localparam String3_LEN = 11;							// Number of characters in the string
+localparam String3_WIDTH = 16*String3_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam String3_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam String3_LE = 492;//String3x;							
+localparam String3_RE = String3_LE + String3_WIDTH - 1;
+localparam String3_TE = 292;//String3y;
+localparam String3_BE = String3_TE + String3_HEIGHT - 1;
+
+wire [10:0] String3_y_adj, String3_x_adj;
+assign String3_y_adj = y - String3_TE;
+assign String3_x_adj = x - String3_LE;
+
+localparam String4_LEN = 11;							// Number of characters in the string
+localparam String4_WIDTH = 16*String4_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam String4_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam String4_LE = 1132;//String4x;							
+localparam String4_RE = String4_LE + String4_WIDTH - 1;
+localparam String4_TE = 292;//String4y;
+localparam String4_BE = String4_TE + String4_HEIGHT - 1; 
+
+wire [10:0] String4_y_adj, String4_x_adj;
+assign String4_y_adj = y - String4_TE;
+assign String4_x_adj = x - String4_LE;
+
+localparam String5_LEN = 12;							// Number of characters in the string
+localparam String5_WIDTH = 16*String5_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam String5_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam String5_LE = 492;					
+localparam String5_RE = String5_LE + String5_WIDTH - 1;
+localparam String5_TE = 492;
+localparam String5_BE = String5_TE + String5_HEIGHT - 1;
+
+wire [10:0] String5_y_adj, String5_x_adj;
+assign String5_y_adj = y - String5_TE;
+assign String5_x_adj = x - String5_LE;
+
+localparam String6_LEN = 11;							// Number of characters in the string
+localparam String6_WIDTH = 16*String6_LEN;  			// Width per character * string lengthAs defined in the character ROM 16-pixel wide characters
+localparam String6_HEIGHT = 16; 						// As defined in the character ROM 16-pixel tall characters
+localparam String6_LE = 1132;							
+localparam String6_RE = String6_LE + String6_WIDTH - 1;
+localparam String6_TE = 492;
+localparam String6_BE = String6_TE + String6_HEIGHT - 1; 
+
+wire [10:0] String6_y_adj, String6_x_adj;
+assign String6_y_adj = y - String6_TE;
+assign String6_x_adj = x - String6_LE;
+
+// Calculate the region when x and y are inside of our string
+wire score_on;
+assign score_on = ((x >= SCORE_LE && x <= SCORE_RE) && (y >= SCORE_TE && y <= SCORE_BE));
+
+// Now we need to grab the data from our character ROM
+reg [10:0] score_rom_addr;
+wire [15:0] score_rom_data;
+
+// choose the letter in the string to display from the CHAR ROM; "SCORE: xx"
+always @ (*) begin
+    score_rom_addr[3:0] <= score_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (score_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    score_rom_addr[10:4] <= 82; // 'R'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    score_rom_addr[10:4] <= 79; // 'O'
+        4'b0010:    score_rom_addr[10:4] <= 85; // 'U'
+        4'b0011:    score_rom_addr[10:4] <= 78; // 'N'
+        4'b0100:    score_rom_addr[10:4] <= 68; // 'D'
+        4'b0101:    score_rom_addr[10:4] <= 58; // ':'
+        4'b0110:    score_rom_addr[10:4] <= digit1;
+        4'b0111:    score_rom_addr[10:4] <= digit2; 
+        default:    score_rom_addr[10:4] <= 0;
+    endcase
+end
+
+// Instantiate our Character ROM (need to use the block memory generator wizard to create this memory block w/ the .COE file)
+// blk_mem_gen_0 (input clka, input [10:0] addra, output [15:0] douta);
+blk_mem_gen_0 CHAR_ROM(clk, score_rom_addr, score_rom_data);
+
+// Now that we have our row, we need to figure out our column (specifically, what pixel are we trying to draw?)
+// ROM address is a full row of data...
+wire [3:0] score_rom_col;
+assign score_rom_col = score_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+
+// Now that we have our row and column. Get the value of the pixel (is it on or off?)
+// Also, NOTE: the column calculation provides the drawing from left to right in the horizontal dimension, 
+// however the data stored in the character ROM is inverted (LSB is on the right not left)
+wire score_rom_pix;
+assign score_rom_pix = score_rom_data[~score_rom_col];
+
+// Am I inside the location to draw the character and is this pixel on.
+wire score_pix_on;
+assign score_pix_on = score_rom_pix & score_on & (String1EN == 0); //I do not want the round to display when in the menu screen
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire String1_on;
+assign String1_on = ((x >= String1_LE && x <= String1_RE) && (y >= String1_TE && y <= String1_BE)&& (String1EN!= 0));
+
+reg [10:0] String1_rom_addr;
+wire [15:0] String1_rom_data;
+
+//// choose the letter in the string to display from the CHAR ROM; "Welcome to Simon Says"
+always @ (*) begin
+    String1_rom_addr[3:0] <= String1_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (String1_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    String1_rom_addr[10:4] <= 87; // 'W'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    String1_rom_addr[10:4] <= 101; // 'e'
+        4'b0010:    String1_rom_addr[10:4] <= 108; // 'l'
+        4'b0011:    String1_rom_addr[10:4] <= 99; // 'c'
+        4'b0100:    String1_rom_addr[10:4] <= 111; // 'o'
+        4'b0101:    String1_rom_addr[10:4] <= 109; // 'm'
+        4'b0110:    String1_rom_addr[10:4] <= 101; // 'e'
+        4'b0111:    String1_rom_addr[10:4] <= 32; // ' '
+        4'b1000:    String1_rom_addr[10:4] <= 32; // ' '
+        4'b1001:    String1_rom_addr[10:4] <= 84; // 'T'
+        4'b1010:    String1_rom_addr[10:4] <= 111; // 'o'
+        4'b1011:    String1_rom_addr[10:4] <= 32; // ' '
+        4'b1100:    String1_rom_addr[10:4] <= 32; // ' '
+        4'b1101:    String1_rom_addr[10:4] <= 83; // 'S'
+        4'b1110:    String1_rom_addr[10:4] <= 83; // 'S'
+        4'b1111:    String1_rom_addr[10:4] <= 33; // '!'
+        default:    String1_rom_addr[10:4] <= 0;
+
+    endcase
+end
+
+blk_mem_gen_0 STRING_ROM1(clk, String1_rom_addr, String1_rom_data);
+wire [3:0] String1_rom_col;
+assign String1_rom_col = String1_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+wire String1_rom_pix;
+assign String1_rom_pix = String1_rom_data[~String1_rom_col];
+wire String1_pix_on;
+assign String1_pix_on = String1_rom_pix & String1_on; 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+wire String2_on;
+assign String2_on = ((x >= String2_LE && x <= String2_RE) && (y >= String2_TE && y <= String2_BE) && (String2EN!= 0));
+
+reg [10:0] String2_rom_addr;
+wire [15:0] String2_rom_data;
+
+//// choose the letter in the string to display from the CHAR ROM; "Select game mode:"
+always @ (*) begin
+    String2_rom_addr[3:0] <= String2_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (String2_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    String2_rom_addr[10:4] <= 83; // 'S'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    String2_rom_addr[10:4] <= 101; // 'e'
+        4'b0010:    String2_rom_addr[10:4] <= 108; // 'l'
+        4'b0011:    String2_rom_addr[10:4] <= 101; // 'e'
+        4'b0100:    String2_rom_addr[10:4] <= 99; // 'c'
+        4'b0101:    String2_rom_addr[10:4] <= 116; // 't'
+        4'b0110:    String2_rom_addr[10:4] <= 32; // ' '
+        4'b0111:    String2_rom_addr[10:4] <= 71; // 'G'
+        4'b1000:    String2_rom_addr[10:4] <= 97; // 'a'
+        4'b1001:    String2_rom_addr[10:4] <= 109; // 'm'
+        4'b1010:    String2_rom_addr[10:4] <= 101; // 'e'
+        4'b1011:    String2_rom_addr[10:4] <= 32; // ' '
+        4'b1100:    String2_rom_addr[10:4] <= 77; // ' M'
+        4'b1101:    String2_rom_addr[10:4] <= 111; // 'o'
+        4'b1110:    String2_rom_addr[10:4] <= 100; // 'd'
+        4'b1111:    String2_rom_addr[10:4] <= 101; // 'e'
+        default:    String2_rom_addr[10:4] <= 0;
+    endcase
+end
+
+blk_mem_gen_0 STRING_ROM2(clk, String2_rom_addr, String2_rom_data);
+wire [3:0] String2_rom_col;
+assign String2_rom_col = String2_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+wire String2_rom_pix;
+assign String2_rom_pix = String2_rom_data[~String2_rom_col];
+wire String2_pix_on;
+assign String2_pix_on = String2_rom_pix & String2_on; 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+wire String3_on;
+assign String3_on = ((x >= String3_LE && x <= String3_RE) && (y >= String3_TE && y <= String3_BE) && (String3EN!= 0));
+
+reg [10:0] String3_rom_addr;
+wire [15:0] String3_rom_data;
+
+//// choose the letter in the string to display from the CHAR ROM; "1: Plain SS
+always @ (*) begin
+    String3_rom_addr[3:0] <= String3_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (String3_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    String3_rom_addr[10:4] <= 49; // '1'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    String3_rom_addr[10:4] <= 58; // ':'
+        4'b0010:    String3_rom_addr[10:4] <= 32; // ' '
+        4'b0011:    String3_rom_addr[10:4] <= 80; // 'P'
+        4'b0100:    String3_rom_addr[10:4] <= 108; // 'l'
+        4'b0101:    String3_rom_addr[10:4] <= 97; // 'a'
+        4'b0110:    String3_rom_addr[10:4] <= 105; // 'i'
+        4'b0111:    String3_rom_addr[10:4] <= 110; // 'n'
+        4'b1000:    String3_rom_addr[10:4] <= 32; // ' '
+        4'b1001:    String3_rom_addr[10:4] <= 83; // 'S'
+        4'b1010:    String3_rom_addr[10:4] <= 83; // 'S'
+        default:    String3_rom_addr[10:4] <= 0;
+    endcase
+end
+
+blk_mem_gen_0 STRING_ROM3(clk, String3_rom_addr, String3_rom_data);
+wire [3:0] String3_rom_col;
+assign String3_rom_col = String3_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+wire String3_rom_pix;
+assign String3_rom_pix = String3_rom_data[~String3_rom_col];
+wire String3_pix_on;
+assign String3_pix_on = String3_rom_pix & String3_on; 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire String4_on;
+assign String4_on = ((x >= String4_LE && x <= String4_RE) && (y >= String4_TE && y <= String4_BE) && (String4EN!= 0));
+
+reg [10:0] String4_rom_addr;
+wire [15:0] String4_rom_data;
+
+// choose the letter in the string to display from the CHAR ROM; "2: B & W SS"
+always @ (*) begin
+    String4_rom_addr[3:0] <= String4_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (String4_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    String4_rom_addr[10:4] <= 50; // '2'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    String4_rom_addr[10:4] <= 58; // ':'
+        4'b0010:    String4_rom_addr[10:4] <= 32; // ' '
+        4'b0011:    String4_rom_addr[10:4] <= 66; // 'B'
+        4'b0100:    String4_rom_addr[10:4] <= 32; // ' '
+        4'b0101:    String4_rom_addr[10:4] <= 38; // '&'
+        4'b0110:    String4_rom_addr[10:4] <= 32; // ' '
+        4'b0111:    String4_rom_addr[10:4] <= 87; // 'W'
+        4'b1000:    String4_rom_addr[10:4] <= 32; // ' '
+        4'b1001:    String4_rom_addr[10:4] <= 83; // 'S'
+        4'b1010:    String4_rom_addr[10:4] <= 83; // 'S'
+        default:    String4_rom_addr[10:4] <= 0;
+    endcase
+end
+
+blk_mem_gen_0 STRING_ROM4(clk, String4_rom_addr, String4_rom_data);
+wire [3:0] String4_rom_col;
+assign String4_rom_col = String4_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+wire String4_rom_pix;
+assign String4_rom_pix = String4_rom_data[~String4_rom_col];
+wire String4_pix_on;
+assign String4_pix_on = String4_rom_pix & String4_on; 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+wire String5_on;
+assign String5_on = ((x >= String5_LE && x <= String5_RE) && (y >= String5_TE && y <= String5_BE) && (String5EN!= 0));
+
+reg [10:0] String5_rom_addr;
+wire [15:0] String5_rom_data;
+
+//// choose the letter in the string to display from the CHAR ROM; "1: Plain SS
+always @ (*) begin
+    String5_rom_addr[5:0] <= String5_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (String5_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    String5_rom_addr[10:4] <= 51; // '3'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    String5_rom_addr[10:4] <= 58; // ':'
+        4'b0010:    String5_rom_addr[10:4] <= 32; // ' '
+        4'b0011:    String5_rom_addr[10:4] <= 82; // 'R'
+        4'b0100:    String5_rom_addr[10:4] <= 117; // 'u'
+        4'b0101:    String5_rom_addr[10:4] <= 98; // 'b'
+        4'b0110:    String5_rom_addr[10:4] <= 114; // 'r'
+        4'b0111:    String5_rom_addr[10:4] <= 105; // 'i'
+        4'b1000:    String5_rom_addr[10:4] <= 99; // 'c'
+        4'b1001:    String5_rom_addr[10:4] <= 32; // ' '
+        4'b1010:    String5_rom_addr[10:4] <= 83; // 'S'
+        4'b1011:    String5_rom_addr[10:4] <= 83; // 'S'
+        default:    String5_rom_addr[10:4] <= 0;
+    endcase
+end
+
+blk_mem_gen_0 STRING_ROM5(clk, String5_rom_addr, String5_rom_data);
+wire [3:0] String5_rom_col;
+assign String5_rom_col = String5_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+wire String5_rom_pix;
+assign String5_rom_pix = String5_rom_data[~String5_rom_col];
+wire String5_pix_on;
+assign String5_pix_on = String5_rom_pix & String5_on; 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire String6_on;
+assign String6_on = ((x >= String6_LE && x <= String6_RE) && (y >= String6_TE && y <= String6_BE) && (String6EN!= 0));
+
+reg [10:0] String6_rom_addr;
+wire [15:0] String6_rom_data;
+
+// choose the letter in the string to display from the CHAR ROM; "2: B & W SS"
+always @ (*) begin
+    String6_rom_addr[3:0] <= String6_y_adj[3:0];	// The least significant bits of our address are based on which row of the specific character we need
+    case (String6_x_adj[7:4])						// The most significant bits of our address are based on which character from the string we need
+        4'b0000:    String6_rom_addr[10:4] <= 52; // '4'		// This is a hardcoded string of characters (although we can pass values in such as sw down below)
+        4'b0001:    String6_rom_addr[10:4] <= 58; // ':'
+        4'b0010:    String6_rom_addr[10:4] <= 32; // ' '
+        4'b0011:    String6_rom_addr[10:4] <= 65; // 'A'
+        4'b0100:    String6_rom_addr[10:4] <= 117; // 'u'
+        4'b0101:    String6_rom_addr[10:4] <= 100; // 'd'
+        4'b0110:    String6_rom_addr[10:4] <= 105; // 'i'
+        4'b0111:    String6_rom_addr[10:4] <= 111; // 'o'
+        4'b1000:    String6_rom_addr[10:4] <= 32; // ' '
+        4'b1001:    String6_rom_addr[10:4] <= 83; // 'S'
+        4'b1010:    String6_rom_addr[10:4] <= 83; // 'S'
+        default:    String6_rom_addr[10:4] <= 0;
+    endcase
+end
+
+blk_mem_gen_0 STRING_ROM6(clk, String6_rom_addr, String6_rom_data);
+wire [3:0] String6_rom_col;
+assign String6_rom_col = String6_x_adj[3:0]; // Grab the Col of our ROM to be drawn
+wire String6_rom_pix;
+assign String6_rom_pix = String6_rom_data[~String6_rom_col];
+wire String6_pix_on;
+assign String6_pix_on = String6_rom_pix & String6_on; 
+
+
+// This mux decides what color should be assigned to the output based on a priority."
+// 1. Check to see if we are in the display region? If not, RGB = 0;
+// 2. Now check (in priority order) are we in the bounds of our objects? If yes, send object color, if not send background color;
+
+always @ (*) begin
+    if (~vde) begin             // Not in display region, send black
+        {R, G, B} <= 24'h000000;
+    end
+    else begin                  // In display region
+        if (score_pix_on) begin      // At a pixel that should be colored to display the character            
+            {R, G, B} <= charcolor;
+        end
+        else if(String1_pix_on) begin
+            {R, G, B} <= charcolor;
+        end
+        else if(String2_pix_on) begin
+            {R, G, B} <= charcolor;
+        end
+        else if(String3_pix_on) begin
+            {R, G, B} <= charcolor;
+        end
+        else if(String4_pix_on) begin
+            {R, G, B} <= charcolor;
+        end
+        else if(String5_pix_on) begin
+            {R, G, B} <= charcolor;
+        end
+        else if(String6_pix_on) begin
+            {R, G, B} <= charcolor;
+        end
+        else if (obj1_on) begin  // If not drawing character draw the input color          
+            {R, G, B} <= foreground1;
+        end
+        else if (obj2_on) begin  // If not drawing character draw the input color          
+            {R, G, B} <= foreground2;
+        end
+        else if (obj3_on) begin  // If not drawing character draw the input color          
+            {R, G, B} <= foreground3;
+        end        
+        else if (obj4_on) begin  // If not drawing character draw the input color          
+            {R, G, B} <= foreground4;
+        end     
+        else begin              // If in no object, draw the background color
+            {R, G, B} <= background;
+
+        end
+    end
+end
+
+endmodule
