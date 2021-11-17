@@ -1,0 +1,73 @@
+#include <unistd.h>// library includes the usleep() function which sleeps the CPU for a number of microseconds
+#include "xil_types.h"
+
+#define SWITCHES 0x43C10000
+#define BUTTONS  0x43C10004
+#define LED 	 0x43C00000
+#define SPI0	 0xE0006000	//from BBPR REVB. not seen in diagram address map?
+#define SPI0_CONTROLLER_EN 0xE0006014
+#define SPI0_RX 0xE0006020
+//18 bit value
+int SPI_SETUP = 0b000100000000000000;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+//SLCR addresses for SPI reset
+#define SLCR_LOCK		*( (uint32_t *) 0xF8000004)
+#define SLCR_UNLOCK		*( (uint32_t *) 0xF8000008)
+#define SLCR_SPI_RST 	*( (uint32_t *) 0xF800021C)
+
+//SLCR lock and unlock keys
+#define UNLOCK_KEY	0xDF0D
+#define LOCK_KEY	0x767B
+
+
+void reset_SPI(void)
+{
+	int i=0; //i for delay
+	SLCR_UNLOCK = UNLOCK_KEY;	//unlock SLCRs
+	SLCR_SPI_RST = 0xF;		//assert SPI reset
+	for(i=0;i<1000;i++);		//make sure Reset occurs
+	SLCR_SPI_RST = 0;		//deassert
+	SLCR_LOCK = LOCK_KEY;		//relock SLCRs
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int get_button_states(void)
+{
+	unsigned int button_states = 0;
+	unsigned int temp_button = 0;
+	while(button_states==0)
+	{
+		button_states = *((uint32_t *)BUTTONS);
+	}
+	button_states &= 0b1111;
+	temp_button = button_states;
+	while(temp_button!=0)
+	{
+		temp_button = *((uint32_t *)BUTTONS);
+	} //srand(button_states);
+	return button_states;
+}
+
+unsigned int get_switch_states(void)
+{
+	unsigned int switch_states = 0; //create variable to store value in
+	switch_states = *((uint32_t *)SWITCHES); //cast a 32 bit value with the address of the switch address
+	//switch_states &= 0b1111; //the address gets anded with 0b1111 so that only the final four bits will be included, first four switches.
+	return switch_states; //return the switch states value
+}
+
+int main(void)
+{
+	int SPI_val = 0;
+	*((uint32_t *)SPI0) = SPI_SETUP;
+	*((uint32_t *)SPI0_CONTROLLER_EN) = 0b01;
+	while(1)
+	{
+		*((uint32_t *)LED) = get_switch_states();
+		SPI_val = *((uint32_t *)SPI0_RX);
+
+	}
+}
